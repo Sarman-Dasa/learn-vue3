@@ -1,9 +1,9 @@
 <script setup>
 import { requiredValidator } from "@validators";
 import axios from "axios";
-import { reactive, ref } from "vue";
+import { onMounted, reactive, ref } from "vue";
 import { toast } from "vue3-toastify";
-
+import myMixin from "../../mixin";
 const refTodoForm = ref();
 
 const todoDetail = reactive({
@@ -13,7 +13,7 @@ const todoDetail = reactive({
   status: null,
   priority: null,
   user_id: null,
-  user_id: 3,
+  user_id: null,
 });
 
 const priorityOptions = ref([
@@ -22,6 +22,7 @@ const priorityOptions = ref([
   { value: "low", label: "Low" },
 ]);
 
+const userListData = ref([]);
 const statusOptions = ref([
   { label: "Done", value: 1 },
   { label: "Pending", value: 0 },
@@ -39,6 +40,29 @@ function checkValidation() {
   });
 }
 
+const { myTestMixinFunction, PostApi } = myMixin();
+
+onMounted(() => {
+  userList();
+  console.log("call");
+});
+
+async function userList() {
+  // let token = CryptoJS.AES.decrypt(
+  //   localStorage.getItem("accessToken"),
+  //   import.meta.env.VITE_SECRET_KEY
+  // );
+  // token = token.toString(CryptoJS.enc.Utf8);
+
+  let response = await PostApi("list", {}, false);
+
+  if (response && response.status == 200) {
+    const data = response.data;
+    userListData.value = data.users;
+    console.log("userListData.value: ", userListData.value);
+  }
+}
+
 //store todo list
 async function addTodo() {
   const date = new Date(todoDetail.due_date);
@@ -52,7 +76,6 @@ async function addTodo() {
     closeButton: false,
     hideProgressBar: true,
   });
-  console.log("call", response);
 }
 </script>
 <template>
@@ -111,6 +134,18 @@ async function addTodo() {
           :items="priorityOptions"
           item-title="label"
           item-value="value"
+          :clearable="true"
+          style="margin-top: 22px"
+          :rules="[requiredValidator]"
+        ></v-select>
+      </VCol>
+      <VCol cols="6">
+        <v-select
+          label="User"
+          v-model="todoDetail.user_id"
+          :items="userListData"
+          item-title="full_name"
+          item-value="id"
           :clearable="true"
           style="margin-top: 22px"
           :rules="[requiredValidator]"
